@@ -1,0 +1,208 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nabnan"><title>Nabnan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#f7f7f5;--fg:#1c1c1a;--card:#fff;--ac:#0f766e;--mut:#6b6b66;--bd:#e2e2dc}
+@media(prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ecece8;--card:#222220;--ac:#2dd4bf;--mut:#9a9a93;--bd:#333330}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,"Noto Nastaliq Urdu","Noto Naskh Arabic",sans-serif}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:8px 14px;cursor:pointer}
+@media(prefers-color-scheme:dark){button{color:#08201c}}
+button.g{background:transparent;color:var(--fg);border:1px solid var(--bd)}
+input,textarea,select{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%}
+#splash{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;padding-top:calc(24px + env(safe-area-inset-top,0px))}
+#splash h1{font-size:3rem;margin:0;color:var(--ac);letter-spacing:1px}
+#splash p{color:var(--mut);margin:0;max-width:320px}
+#app{display:none;height:100%;flex-direction:column}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--bd);background:var(--card)}
+header b{flex:1;color:var(--ac);font-size:1.15rem}
+#msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:88%;padding:10px 13px;border-radius:14px;background:var(--card);border:1px solid var(--bd);overflow-wrap:anywhere}
+.m.u{align-self:flex-end;background:var(--ac);color:#fff;border:0}
+@media(prefers-color-scheme:dark){.m.u{color:#08201c}}
+.doc{margin:8px 0 2px;padding:10px;border:1px dashed var(--ac);border-radius:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.doc span{flex:1 0 100%;font-weight:600}
+.doc button{padding:6px 12px}
+.empty{margin:auto;text-align:center;color:var(--mut);max-width:300px}
+#bar{display:flex;gap:8px;padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bd);background:var(--card);align-items:flex-end}
+#bar textarea{resize:none;max-height:120px}
+#st{font-size:.8rem;color:var(--mut);padding:0 14px 4px;min-height:1em}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--fg);width:min(92vw,420px);max-height:85vh}
+dialog::backdrop{background:#0008}
+.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.ci{display:flex;gap:6px;margin:6px 0}.ci button:first-child{flex:1;text-align:start}
+label{font-size:.85rem;color:var(--mut)}
+.ch{position:relative;width:min(100%,520px);margin:8px 0}.ch button{padding:4px 10px;margin-top:4px}
+#chips{display:flex;gap:6px;overflow-x:auto;padding:6px 10px;background:var(--card);border-top:1px solid var(--bd)}#chips button{white-space:nowrap;padding:5px 11px}
+</style></head><body>
+<div id="splash">
+<h1>Nabnan</h1><p>Your free AI assistant for every subject, and a document maker for Word, PDF and PowerPoint.</p>
+<input id="nm" placeholder="Your name" style="max-width:300px"><button id="go">Start</button>
+<p style="font-size:.8rem">No login. Your chats stay on your device.</p></div>
+
+<div id="app">
+<header><button class="g" id="mc">☰</button><b>Nabnan</b><button class="g" id="ms">⚙</button></header>
+<div id="msgs"></div><div id="st"></div>
+<div id="chips"></div>
+<div id="bar"><button class="g" id="at" title="Attach any file">📎</button>
+<textarea id="in" rows="1" placeholder="Ask anything, or ask for a document…" dir="auto"></textarea>
+<button id="sd">Send</button><input type="file" id="fi" hidden multiple></div></div>
+
+<dialog id="dc"><b>Chats</b><div class="row"><button id="nc">+ New chat</button><button class="g" onclick="dc.close()">Close</button></div><div id="cl"></div></dialog>
+<dialog id="ds"><b>Settings</b>
+<p><label>Free Gemini API key (get one at aistudio.google.com/apikey)</label><input id="ky" type="password" placeholder="Paste key"></p>
+<p><label>Model</label><input id="md"></p>
+<p><label><input type="checkbox" id="wb" style="width:auto"> Search the web for fresh facts</label></p>
+<p><label><input type="checkbox" id="of" style="width:auto"> Use in-browser AI only (no key, slower, large first download)</label></p>
+<div class="row"><button id="bk">Download backup</button><button class="g" id="rs">Restore backup</button><input type="file" id="rf" hidden accept=".json"></div>
+<div class="row"><button id="sv">Save</button><button class="g" onclick="ds.close()">Close</button></div></dialog>
+
+<script>
+const $=s=>document.querySelector(s);
+let S=Object.assign({user:'',key:'',model:'gemini-2.5-flash',off:false,chats:[],cur:null},JSON.parse(localStorage.nabnan||'{}'));
+const save=()=>localStorage.nabnan=JSON.stringify(S,(k,v)=>k=='media'?undefined:v);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const rtl=t=>/[\u0600-\u06FF]/.test(t);
+const status=t=>$('#st').textContent=t||'';
+let pend=[],DOCS=[],CH=[],busy=false;
+const CHRE=/<<CHART type="(\w+)" title="([^"]*)">>([\s\S]*?)<<END>>/g;
+const PAL=['#0f766e','#d97706','#2563eb','#db2777','#7c3aed','#65a30d'];
+const rep=(k,v)=>k=='media'?undefined:v;
+const shown=t=>t.replace(/\[Attached file: ([^\]\n]*)\]\n[\s\S]*?\[End of file\]\n?/g,'📎 $1\n').replace(/\[Attached file: ([^\n]*?) \(image[^\]]*\]\n?/g,'📎 $1\n');
+const DOCRE=/<<DOC type="(\w+)" title="([^"]*)">>([\s\S]*?)<<END>>/g;
+const SYS=()=>`You are Nabnan, a precise, expert assistant covering every subject: science, arts, psychology, history, technology and more. The user's name is ${S.user}. Reply in the same language and script the user writes in: English, Urdu script, or Roman Urdu (Urdu typed in English letters, the way people chat on WhatsApp). If the user writes Roman Urdu, answer in natural Roman Urdu, and keep technical terms in English. Follow the user's instructions exactly and completely; never add filler.
+When the user wants a document, file, report, letter or slides: write one short sentence, then the full document in this exact format:
+<<DOC type="docx" title="Short Title">>
+# Heading
+Paragraph text
+- bullet
+<<END>>
+type is docx (Word), pdf, or pptx (PowerPoint). For pptx every slide starts with "# Slide title" followed by "- bullet" lines. Documents must be complete, with real content and no placeholders. If the user attached files, base the document on them; otherwise use your own knowledge.
+You can inspect any attached file (text, tables, slides, images, scanned pages) and answer from it. For study help, give clear step-by-step explanations, then notes, summaries, flashcards or quizzes as asked, at the depth requested. When data or a trend is better shown visually, add a chart in this exact format (valid JSON; type is bar, line, pie, doughnut or radar):
+<<CHART type="bar" title="Title">>{"labels":["A","B"],"datasets":[{"label":"Name","data":[1,2]}]}<<END>>
+Only chart real or clearly stated numbers.`;
+
+function chat(){let c=S.chats.find(x=>x.id==S.cur);if(!c){c={id:Date.now(),title:'New chat',msgs:[]};S.chats.unshift(c);S.cur=c.id;save()}return c}
+function card(i){const d=DOCS[i];return `<div class="doc" dir="ltr"><span>📄 ${esc(d.ti)}.${d.ty}</span><button onclick="act(${i})">Download</button><button class="g" onclick="act(${i},1)">Share</button></div>`}
+function fmt(t){return esc(t.replace(CHRE,(_,ty,ti,bo)=>{CH.push({ty:ty.toLowerCase(),ti,bo});return `\u0002${CH.length-1}\u0002`}).replace(DOCRE,(_,ty,ti,bo)=>{DOCS.push({ty:ty.toLowerCase(),ti,bo});return `\u0001${DOCS.length-1}\u0001`})).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#{1,3} (.*)$/gm,'<b>$1</b>').replace(/\n/g,'<br>').replace(/\u0001(\d+)\u0001/g,(_,i)=>card(i)).replace(/\u0002(\d+)\u0002/g,(_,i)=>`<div class="ch" dir="ltr"><canvas id="ch${i}"></canvas><button class="g" onclick="chdl(${i})">Save chart</button></div>`)}
+function chdl(i){document.getElementById('ch'+i).toBlob(b=>{const f=new File([b],'chart.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f]}).catch(()=>{});else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download='chart.png';a.click()}})}
+function draw(){Chart.defaults.color=getComputedStyle(document.body).color;
+ CH.forEach((c,i)=>{const el=document.getElementById('ch'+i);if(!el)return;
+  try{const d=JSON.parse(c.bo),ln=c.ty=='line'||c.ty=='radar',pc=c.ty=='pie'||c.ty=='doughnut';
+   d.datasets.forEach((s,j)=>{if(!s.backgroundColor)s.backgroundColor=pc?d.labels.map((_,k)=>PAL[k%6]):PAL[j%6];if(!s.borderColor&&ln)s.borderColor=PAL[j%6]});
+   new Chart(el,{type:c.ty,data:d,options:{responsive:true,plugins:{title:{display:true,text:c.ti}}}})}
+  catch(e){el.parentNode.textContent='Chart could not be drawn.'}})}
+function render(){DOCS=[];CH=[];const c=chat(),m=$('#msgs');
+ m.innerHTML=c.msgs.length?c.msgs.map(x=>`<div class="m ${x.r=='user'?'u':''}" dir="auto">${x.r=='user'?esc(shown(x.t)).replace(/\n/g,'<br>'):fmt(x.t)}</div>`).join(''):`<div class="empty"><h2>Hello ${esc(S.user)} 👋</h2>Ask me anything, or say: “Make a PowerPoint about photosynthesis.”</div>`;
+ draw();m.scrollTop=m.scrollHeight}
+
+const cts=ms=>ms.map(m=>({role:m.r=='user'?'user':'model',parts:[{text:m.t},...(m.media||[]).map(x=>({inline_data:{mime_type:x.mime,data:x.data}}))]}));
+let ctl,eng,stopF=false;
+async function gem(msgs,on,sig){
+ const u=`https://generativelanguage.googleapis.com/v1beta/models/${S.model}:streamGenerateContent?alt=sse&key=${S.key}`;
+ const bd=w=>JSON.stringify({systemInstruction:{parts:[{text:SYS()}]},contents:cts(msgs),...(w?{tools:[{google_search:{}}]}:{})});
+ const go=w=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:bd(w),signal:sig});
+ let r=await go(S.web!==false);
+ if(r.status==400&&S.web!==false)r=await go(false);
+ if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(r.status+' '+(j.error?.message||''))}
+ const rd=r.body.getReader(),dc=new TextDecoder();let buf='',out='';
+ for(;;){const{done,value}=await rd.read();if(done)break;buf+=dc.decode(value,{stream:true});let i;
+  while((i=buf.indexOf('\n'))>=0){const ln=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!ln.startsWith('data:'))continue;
+   try{const p=JSON.parse(ln.slice(5)).candidates?.[0]?.content?.parts;if(p){out+=p.map(x=>x.text||'').join('');on(out)}}catch{}}}
+ return out}
+async function local(msgs,on,sig){
+ if(!eng){const w=await import('https://esm.run/@mlc-ai/web-llm');eng=await w.CreateMLCEngine('Qwen2.5-1.5B-Instruct-q4f16_1-MLC',{initProgressCallback:p=>status(p.text)})}
+ const st=await eng.chat.completions.create({stream:true,messages:[{role:'system',content:SYS()},...msgs.map(m=>({role:m.r=='user'?'user':'assistant',content:m.t}))]});
+ let out='';for await(const ch of st){if(sig.aborted)break;out+=ch.choices[0]?.delta?.content||'';on(out)}return out}
+async function ask(msgs,on,sig){
+ if(S.key&&!S.off){try{return await gem(msgs,on,sig)}catch(e){if(sig.aborted)throw e;if(!/^(429|5)/.test(e.message)&&e.name!='TypeError')throw e;status('Online AI is busy or offline ('+e.message.slice(0,40)+'). Switching to in-browser AI…')}}
+ return local(msgs,on,sig)}
+
+async function send(){
+ const v=$('#in').value.trim();if((!v&&!pend.length)||busy)return;busy=true;$('#sd').textContent='■ Stop';
+ const c=chat(),md=pend.filter(f=>f.media).map(f=>f.media);
+ const t=pend.map(f=>f.t?`[Attached file: ${f.n}]\n${f.t}\n[End of file]\n`:`[Attached file: ${f.n} (image/scan, view it directly)]\n`).join('\n')+v;pend=[];
+ c.msgs.push({r:'user',t,media:md});if(c.title=='New chat')c.title=(v||'Files').slice(0,40);
+ const a={r:'ai',t:''};c.msgs.push(a);$('#in').value='';save();render();
+ const last=()=>$('#msgs').lastElementChild;last().textContent='…';
+ status(md.length?'Reading your file and thinking…':'Thinking…');
+ ctl=new AbortController();let tick=0;
+ try{a.t=await ask(c.msgs.slice(0,-1),x=>{a.t=x;const n=Date.now();if(n-tick>120){tick=n;last().innerHTML=fmt(x);$('#msgs').scrollTop=1e9;status('Writing…')}},ctl.signal)}
+ catch(e){if(!ctl.signal.aborted)a.t=(a.t?a.t+'\n\n':'')+'Sorry, something went wrong: '+e.message+'\nCheck your key in ⚙ Settings, then try again.'}
+ if(ctl.signal.aborted&&a.t)a.t+='\n\n(stopped)';
+ if(!a.t)c.msgs.pop();
+ busy=false;$('#sd').textContent='Send';status(ctl.signal.aborted?'Stopped':'');save();render()}
+function stop(){stopF=true;ctl&&ctl.abort();try{eng&&eng.interruptGenerate()}catch{}}
+
+function blocks(t){return t.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{let m;
+ if(m=l.match(/^(#{1,3})\s+(.*)/))return{k:'h',n:m[1].length,t:m[2]};
+ if(m=l.match(/^[-*•]\s+(.*)/))return{k:'b',t:m[1]};return{k:'p',t:l}})}
+const cl=s=>s.replace(/\*\*|__|`/g,'');
+async function mk(ty,ti,bo){const B=blocks(bo);
+ if(ty=='docx'){const d=docx,H=[0,d.HeadingLevel.HEADING_1,d.HeadingLevel.HEADING_2,d.HeadingLevel.HEADING_3];
+  const k=[new d.Paragraph({text:ti,heading:d.HeadingLevel.TITLE}),...B.map(b=>b.k=='h'?new d.Paragraph({text:cl(b.t),heading:H[b.n],bidirectional:rtl(b.t)}):new d.Paragraph({text:cl(b.t),bullet:b.k=='b'?{level:0}:undefined,bidirectional:rtl(b.t)}))];
+  const bl=await d.Packer.toBlob(new d.Document({sections:[{children:k}]}));return new File([bl],ti+'.docx',{type:bl.type})}
+ if(ty=='pptx'){const p=new PptxGenJS(),S2=[];let cur=null;
+  for(const b of B){if(b.k=='h'&&b.n<3||!cur){cur={t:b.k=='h'?b.t:ti,i:[]};S2.push(cur);if(b.k=='h')continue}cur.i.push(b)}
+  for(const x of S2){const s=p.addSlide();s.addText(cl(x.t),{x:.5,y:.3,w:9,h:.9,fontSize:28,bold:true,color:'0F766E',rtlMode:rtl(x.t)});
+   s.addText(x.i.map(i=>({text:cl(i.t),options:{bullet:i.k=='b',breakLine:true}})),{x:.5,y:1.3,w:9,h:4,fontSize:18,valign:'top',rtlMode:rtl(bo)})}
+  const bl=await p.write({outputType:'blob'});return new File([bl],ti+'.pptx',{type:bl.type})}
+ if(rtl(bo)){const w=open('','_blank');w.document.write(`<html dir="rtl"><body style="font-family:'Noto Nastaliq Urdu',serif;line-height:2"><h1>${esc(ti)}</h1>${B.map(b=>b.k=='h'?`<h${b.n+1}>${esc(cl(b.t))}</h${b.n+1}>`:b.k=='b'?`<li>${esc(cl(b.t))}</li>`:`<p>${esc(cl(b.t))}</p>`).join('')}<script>onload=()=>print()<\/script></body></html>`);w.document.close();return null}
+ const D=new jspdf.jsPDF();let y=20;D.setFontSize(18);D.setFont(undefined,'bold');D.text(ti,15,y);y+=11;
+ for(const b of B){D.setFontSize(b.k=='h'?15-b.n:11);D.setFont(undefined,b.k=='h'?'bold':'normal');
+  for(const ln of D.splitTextToSize((b.k=='b'?'• ':'')+cl(b.t),180)){if(y>280){D.addPage();y=20}D.text(ln,15,y);y+=b.k=='h'?7:6}y+=2}
+ return new File([D.output('blob')],ti+'.pdf',{type:'application/pdf'})}
+async function act(i,share){if(busy)return;const d=DOCS[i];busy=true;stopF=false;$('#sd').textContent='■ Stop';status('Preparing '+d.ty+'…');try{await act2(d,share)}finally{busy=false;$('#sd').textContent='Send'}}
+async function act2(d,share){
+ try{const f=await mk(d.ty,d.ti,d.bo);if(stopF)return status('Stopped');status('');if(!f)return;
+  if(share&&navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],title:d.ti}).catch(()=>{});
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.append(a);a.click();a.remove()}
+ catch(e){status('Could not make file: '+e.message)}}
+
+function chats(){$('#cl').innerHTML=S.chats.map(c=>`<div class="ci"><button class="g" onclick="S.cur=${c.id};save();render();dc.close()">${esc(c.title)}</button><button class="g" onclick="del(${c.id})">🗑</button></div>`).join('')||'<p>No chats yet.</p>'}
+function del(id){if(confirm('Delete this chat permanently?')){S.chats=S.chats.filter(c=>c.id!=id);if(S.cur==id)S.cur=null;save();chats();render()}}
+function enter(){S.user=$('#nm').value.trim()||S.user;if(!S.user)return $('#nm').focus();save();$('#splash').style.display='none';$('#app').style.display='flex';render()}
+$('#go').onclick=enter;$('#nm').value=S.user;if(S.user)$('#go').textContent='Continue as '+S.user;
+$('#sd').onclick=()=>busy?stop():send();
+const CP=[['📝 Notes','Make well-organised study notes from the attached file(s) or this topic: '],['🧠 Explain','Explain step by step in simple words: '],['🃏 Flashcards','Make 15 flashcards (question and answer) on: '],['❓ Quiz','Give me a 10-question quiz with answers at the end on: '],['📊 Chart','Show a chart of: '],['📄 Summary doc','Summarise the attached file(s) into a Word document.']];
+$('#chips').innerHTML=CP.map((c,i)=>`<button class="g" data-i="${i}">${c[0]}</button>`).join('');
+$('#chips').onclick=e=>{const i=e.target.dataset.i;if(i==null)return;$('#in').value=CP[i][1];$('#in').focus()};$('#in').onkeydown=e=>{if(e.key=='Enter'&&!e.shiftKey&&innerWidth>700){e.preventDefault();send()}};
+$('#in').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'};
+$('#mc').onclick=()=>{chats();dc.showModal()};$('#nc').onclick=()=>{S.cur=null;S.chats=S.chats.filter(c=>c.msgs.length);save();render();dc.close()};
+$('#ms').onclick=()=>{$('#ky').value=S.key;$('#md').value=S.model;$('#of').checked=S.off;$('#wb').checked=S.web!==false;ds.showModal()};
+$('#sv').onclick=()=>{S.key=$('#ky').value.trim();S.model=$('#md').value.trim()||'gemini-2.5-flash';S.off=$('#of').checked;S.web=$('#wb').checked;save();ds.close()};
+$('#at').onclick=()=>$('#fi').click();
+const b64=f=>new Promise((ok,no)=>{if(f.size>14e6)return no(new Error('too big'));const r=new FileReader();r.onload=()=>ok(r.result.split(',')[1]);r.onerror=no;r.readAsDataURL(f)});
+async function rd(f){const n=f.name.toLowerCase(),ab=()=>f.arrayBuffer();
+ if(f.type.startsWith('image/')||/\.(png|jpe?g|webp|gif|heic|bmp)$/.test(n))return{media:{mime:f.type||'image/jpeg',data:await b64(f)}};
+ if(/\.(xlsx|xls|ods)$/.test(n)){const w=XLSX.read(await ab());return{t:w.SheetNames.map(s=>'## Sheet '+s+'\n'+XLSX.utils.sheet_to_csv(w.Sheets[s])).join('\n')}}
+ if(n.endsWith('.pptx')){const z=await JSZip.loadAsync(await ab());let t='';for(const k of Object.keys(z.files).filter(k=>/ppt\/slides\/slide\d+\.xml$/.test(k)).sort((a,b)=>a.match(/\d+/)-b.match(/\d+/)))t+='## Slide '+k.match(/\d+/)+'\n'+[...(await z.file(k).async('string')).matchAll(/<a:t>([^<]*)<\/a:t>/g)].map(m=>m[1]).join('\n')+'\n';return{t}}
+ if(n.endsWith('.docx')||n.endsWith('.pdf')){const t=(await rd0(f)).trim();if(!t&&n.endsWith('.pdf'))return{media:{mime:'application/pdf',data:await b64(f)}};return{t}}
+ const s=await f.text();if(/\uFFFD/.test(s.slice(0,3000)))throw new Error('unsupported');return{t:s}}
+const WURL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+async function rd0(f){const n=f.name.toLowerCase();
+ if(n.endsWith('.docx'))return (await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
+ if(n.endsWith('.pdf')){if(!pdfjsLib.GlobalWorkerOptions.workerSrc){const w=await (await fetch(WURL)).text();pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([w],{type:'text/javascript'}))}
+  const p=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t='';
+  for(let i=1;i<=p.numPages&&t.length<40000;i++){const c=await (await p.getPage(i)).getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n'}return t}
+ return f.text()}
+$('#fi').onchange=async e=>{const fs=[...e.target.files];e.target.value='';let bad=[];
+ for(const f of fs){status('Reading '+f.name+'…');
+  try{const r=await rd(f);if(r.media)pend.push({n:f.name,media:r.media});else if(r.t.trim())pend.push({n:f.name,t:r.t.trim().slice(0,40000)});else bad.push(f.name+' (no readable text)')}
+  catch(x){bad.push(f.name+' (could not read)')}}
+ status((pend.length?pend.length+' file(s) attached. ':'')+(bad.length?'Problem: '+bad.join(', '):''))};
+$('#bk').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,rep)],{type:'application/json'}));a.download='nabnan-backup.json';a.click()};
+$('#rs').onclick=()=>$('#rf').click();
+$('#rf').onchange=async e=>{try{S=Object.assign(S,JSON.parse(await e.target.files[0].text()));save();render();ds.close();status('Backup restored')}catch{status('Invalid backup file')}};
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>
